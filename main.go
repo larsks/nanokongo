@@ -1,12 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/larsks/nanokongo/decouple"
 )
 
 func must(err error) {
@@ -16,25 +17,36 @@ func must(err error) {
 }
 
 func main() {
-	/*
-		defer func() {
-			if err := recover(); err != nil {
-				log.Fatal().Err(err.(error)).Send()
-			}
-		}()
-	*/
+	decouple.Load()
+	decouple.SetPrefix("NANOKONGO_")
+
+	loglevel, _ := decouple.GetIntInRange("LOGLEVEL", 1, -1, 5)
+	cfgfilename, _ := decouple.GetString("CONFIG", "config.yml")
+	debug, _ := decouple.GetBool("DEBUG", false)
+
+	zerolog.SetGlobalLevel(zerolog.Level(loglevel))
+
+	defer func() {
+		// Set NANOKONGO_DEBUG=true if you want to see
+		// backtraces for panics.
+		if err := recover(); !debug && err != nil {
+			log.Fatal().Err(err.(error)).Send()
+		} else {
+			panic(err)
+		}
+	}()
 
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-	cfg, err := ReadConfigFromFile("config.yml")
+	cfg, err := ReadConfigFromFile(cfgfilename)
 	must(err)
-	fmt.Printf("%+v\n", cfg)
 
 	ctrl, err := NewController(cfg)
 	must(err)
 	must(ctrl.Open())
 	defer ctrl.Close()
 
+	log.Info().Msgf("listening for events")
 	must(ctrl.Listen())
 
 	for {
