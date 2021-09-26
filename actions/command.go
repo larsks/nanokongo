@@ -1,18 +1,40 @@
 package actions
 
 import (
+	"fmt"
+	"os/exec"
+	"strings"
+
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
 
 type (
 	CommandAction struct {
-		KeySpecs []string
+		Args []string
 	}
 )
 
+func substituteValue(oldargs []string, value int) []string {
+	var args []string
+
+	valString := fmt.Sprintf("%d", value)
+
+	for _, arg := range oldargs {
+		args = append(args, strings.Replace(arg, "{value}", valString, -1))
+	}
+
+	return args
+}
+
 func (action CommandAction) Act(value int) error {
-	log.Warn().Msgf("execute command action (%d)", value)
+	args := substituteValue(action.Args, value)
+	err := exec.Command(args[0], args[1:]...).Run()
+	log.Warn().Msgf("execute command action: %s", args)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -23,7 +45,7 @@ func (action CommandAction) String() string {
 func NewCommandAction(args yaml.Node) (Action, error) {
 	action := CommandAction{}
 
-	if err := args.Decode(&action.KeySpecs); err != nil {
+	if err := args.Decode(&action.Args); err != nil {
 		return nil, err
 	}
 
