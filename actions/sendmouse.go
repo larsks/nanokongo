@@ -30,7 +30,7 @@ type (
 func (action SendMouseAction) Act(value, lastvalue int) error {
 	var dir int
 
-	log.Warn().Msgf("execute sendmouse action (%d)", value)
+	log.Warn().Msgf("execute sendmouse action (%+v)", action.MouseSpec)
 	if value > lastvalue {
 		dir = 1
 	} else {

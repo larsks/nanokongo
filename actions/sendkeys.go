@@ -25,8 +25,8 @@ type (
 )
 
 func (action SendKeysAction) Act(value, lastvalue int) error {
-	log.Warn().Msgf("execute sendkeys action (%d)", value)
 	for _, keyspec := range action.KeySpecs {
+		log.Warn().Msgf("execute sendkeys action (%+v)", keyspec)
 		for _, modname := range keyspec.Mods {
 			log.Debug().Msgf("keydown modifier %s", modname)
 			mod, exists := keycodes[strings.ToLower(modname)]
