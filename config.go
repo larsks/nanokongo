@@ -18,24 +18,10 @@ type (
 	ControlSpec struct {
 		Control    uint8
 		Type       string
-		ScaleRange []int    `yaml:"scaleRange,omitempty"`
-		OnRelease  []Action `yaml:"onRelease,omitempty"`
-		OnPress    []Action `yaml:"onPress,omitempty"`
-		OnChange   []Action `yaml:"onChange,omitempty"`
-	}
-
-	Action struct {
-		Command   []string    `yaml:"command,omitempty"`
-		SendKeys  []string    `yaml:"sendKeys,omitempty"`
-		SendMouse []MouseSpec `yaml:"sendMouse,omitempty"`
-	}
-
-	MouseSpec struct {
-		Press   string `yaml:"press,omitempty"`
-		Release string `yaml:"release,omitempty"`
-		Click   string `yaml:"click,omitempty"`
-		X       int    `yaml:"x,omitempty"`
-		Y       int    `yaml:"y,omitempty"`
+		ScaleRange []int                  `yaml:"scaleRange,omitempty"`
+		OnRelease  []map[string]yaml.Node `yaml:"onRelease,omitempty"`
+		OnPress    []map[string]yaml.Node `yaml:"onPress,omitempty"`
+		OnChange   []map[string]yaml.Node `yaml:"onChange,omitempty"`
 	}
 )
 

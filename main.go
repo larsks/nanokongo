@@ -16,11 +16,13 @@ func must(err error) {
 }
 
 func main() {
-	defer func() {
-		if err := recover(); err != nil {
-			log.Fatal().Err(err.(error)).Send()
-		}
-	}()
+	/*
+		defer func() {
+			if err := recover(); err != nil {
+				log.Fatal().Err(err.(error)).Send()
+			}
+		}()
+	*/
 
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
