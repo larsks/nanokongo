@@ -71,7 +71,7 @@ func NewController(cfg *Config) (*Controller, error) {
 		return nil, err
 	}
 	controller.Driver = drv
-	if err := controller.ProcessConfig(); err != nil {
+	if err := controller.processConfig(); err != nil {
 		return nil, err
 	}
 
@@ -84,7 +84,16 @@ func NewControl(controlnumber uint8, controltype ControlTypeEnum, scalerange []i
 		Type:   controltype,
 	}
 
+	log := log.With().
+		Int("control", int(controlnumber)).
+		Str("type", controltype.String()).Logger()
+
+	log.Debug().Msgf("creating new control")
+
 	if len(scalerange) == 2 {
+		log.Debug().
+			Int("Min", scalerange[0]).
+			Int("Max", scalerange[1]).Msgf("configure scaling")
 		control.Scale = &ScaleSpec{
 			MinOutput: scalerange[0],
 			MaxOutput: scalerange[1],
@@ -104,6 +113,8 @@ func (control *Control) ScaleValue(value uint8) int {
 			(float32(value)/float32(127))*
 				float32(control.Scale.MaxOutput-control.Scale.MinOutput)) + control.Scale.MinOutput
 	}
+
+	log.Debug().Int("old", int(value)).Int("new", newval).Msgf("scaled value")
 
 	return newval
 }
@@ -148,8 +159,10 @@ func buildActionList(spec []map[string]yaml.Node) ([]actions.Action, error) {
 	return actionlist, nil
 }
 
-func (controller *Controller) ProcessConfig() error {
+func (controller *Controller) processConfig() error {
 	controller.Channel = controller.config.Channel
+
+	log.Debug().Msgf("start processing config")
 
 	for number, controlspec := range controller.config.Controls {
 		var err error
@@ -159,7 +172,6 @@ func (controller *Controller) ProcessConfig() error {
 			ControlTypeFromName(controlspec.Type),
 			controlspec.ScaleRange)
 		controller.Controls[number] = control
-		log.Debug().Msgf("control: %+v", control)
 
 		if control.Type == ControlTypeButton {
 			control.OnRelease, err = buildActionList(controlspec.OnRelease)
@@ -177,7 +189,10 @@ func (controller *Controller) ProcessConfig() error {
 				return err
 			}
 		}
+
+		log.Debug().Int("control", int(number)).Msgf("config: %+v", control)
 	}
+	log.Debug().Msgf("finished processing config")
 	return nil
 }
 
@@ -187,6 +202,8 @@ func (controller *Controller) Open() error {
 		return err
 	}
 
+	// Iterate over available MIDI inputs, looking for one that matches
+	// the glob pattern in the configuration file.
 	var selected midi.In
 	for _, in := range ins {
 		log.Debug().Str("portname", in.String()).Msg("looking for device")
@@ -205,7 +222,7 @@ func (controller *Controller) Open() error {
 		return fmt.Errorf("unable to find device")
 	}
 
-	log.Debug().Str("portname", selected.String()).Msg("found device")
+	log.Info().Str("portname", selected.String()).Msg("found device")
 
 	if err = selected.Open(); err != nil {
 		return err
@@ -249,11 +266,13 @@ func (controller *Controller) HandleControlChange(pos *reader.Position, channelN
 		return
 	}
 
-	log = log.With().Int("lastvalue", int(control.LastValue)).Logger()
+	log = log.With().
+		Str("type", control.Type.String()).
+		Int("lastvalue", int(control.LastValue)).Logger()
+	log.Debug().Msgf("handling event")
 
 	switch control.Type {
 	case ControlTypeButton:
-		log.Debug().Msgf("handling button")
 		if value != 0 && value != 127 {
 			log.Warn().Msgf("value out of range")
 			return
@@ -263,14 +282,14 @@ func (controller *Controller) HandleControlChange(pos *reader.Position, channelN
 			for _, action := range control.OnRelease {
 				err := action.Act(int(value), int(control.LastValue))
 				if err != nil {
-					log.Warn().Err(err).Send()
+					log.Warn().Err(err).Msgf("action failed")
 				}
 			}
 		} else if value == 127 && control.LastValue == 0 {
 			for _, action := range control.OnPress {
 				err := action.Act(int(value), int(control.LastValue))
 				if err != nil {
-					log.Warn().Err(err).Send()
+					log.Warn().Err(err).Msgf("action failed")
 				}
 			}
 		}
@@ -279,19 +298,18 @@ func (controller *Controller) HandleControlChange(pos *reader.Position, channelN
 			for _, action := range control.OnChange {
 				err := action.Act(int(value), int(control.LastValue))
 				if err != nil {
-					log.Warn().Err(err).Send()
+					log.Warn().Err(err).Msgf("action failed")
 				}
 			}
 		}
 	case ControlTypeKnob:
 		svalue := control.ScaleValue(value)
 		slastvalue := control.ScaleValue(control.LastValue)
-		log.Debug().Msgf("handling knob")
 		if value != control.LastValue {
 			for _, action := range control.OnChange {
 				err := action.Act(svalue, slastvalue)
 				if err != nil {
-					log.Warn().Err(err).Send()
+					log.Warn().Err(err).Msgf("action failed")
 				}
 			}
 		}

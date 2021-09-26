@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/larsks/nanokongo/actions"
 	"github.com/larsks/nanokongo/decouple"
 	"github.com/larsks/nanokongo/version"
 )
@@ -46,6 +47,8 @@ func main() {
 			panic(err)
 		}
 	}()
+
+	actions.RegisterActions()
 
 	cfg, err := ReadConfigFromFile(cfgfilename)
 	must(err)

@@ -16,21 +16,22 @@ type (
 var ActionMap map[string]ActionConstructor = make(map[string]ActionConstructor)
 
 func RegisterAction(name string, constructor ActionConstructor) {
+	log.Debug().Str("action", name).Msgf("register action")
 	ActionMap[name] = constructor
+}
+
+func RegisterActions() {
+	RegisterAction("sendKeys", NewSendKeysAction)
+	RegisterAction("command", NewCommandAction)
+	RegisterAction("sendMouse", NewSendMouseAction)
 }
 
 func LookupAction(want string) ActionConstructor {
 	for have, constructor := range ActionMap {
-		log.Debug().Str("have", have).Str("want", want).Send()
+		log.Trace().Str("have", have).Str("want", want).Send()
 		if have == want {
 			return constructor
 		}
 	}
 	return nil
-}
-
-func init() {
-	RegisterAction("sendKeys", NewSendKeysAction)
-	RegisterAction("command", NewCommandAction)
-	RegisterAction("sendMouse", NewSendMouseAction)
 }
