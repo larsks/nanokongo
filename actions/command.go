@@ -27,7 +27,7 @@ func substituteValue(oldargs []string, value int) []string {
 	return args
 }
 
-func (action CommandAction) Act(value int) error {
+func (action CommandAction) Act(value, lastvalue int) error {
 	args := substituteValue(action.Args, value)
 	err := exec.Command(args[0], args[1:]...).Run()
 	log.Warn().Msgf("execute command action: %s", args)

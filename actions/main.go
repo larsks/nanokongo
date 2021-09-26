@@ -7,7 +7,7 @@ import (
 
 type (
 	Action interface {
-		Act(int) error
+		Act(int, int) error
 	}
 
 	ActionConstructor func(args yaml.Node) (Action, error)
@@ -32,4 +32,5 @@ func LookupAction(want string) ActionConstructor {
 func init() {
 	RegisterAction("sendKeys", NewSendKeysAction)
 	RegisterAction("command", NewCommandAction)
+	RegisterAction("sendMouse", NewSendMouseAction)
 }

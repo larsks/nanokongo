@@ -261,25 +261,26 @@ func (controller *Controller) HandleControlChange(pos *reader.Position, channelN
 
 		if value == 0 && control.LastValue == 127 {
 			for _, action := range control.OnRelease {
-				action.Act(int(value))
+				action.Act(int(value), int(control.LastValue))
 			}
-		} else if value == 1 && control.LastValue == 0 {
+		} else if value == 127 && control.LastValue == 0 {
 			for _, action := range control.OnPress {
-				action.Act(int(value))
+				action.Act(int(value), int(control.LastValue))
 			}
 		}
 
 		if value != control.LastValue {
 			for _, action := range control.OnChange {
-				action.Act(int(value))
+				action.Act(int(value), int(control.LastValue))
 			}
 		}
 	case ControlTypeKnob:
 		svalue := control.ScaleValue(value)
+		slastvalue := control.ScaleValue(control.LastValue)
 		log.Debug().Msgf("handling knob")
 		if value != control.LastValue {
 			for _, action := range control.OnChange {
-				action.Act(svalue)
+				action.Act(svalue, slastvalue)
 			}
 		}
 	default:
