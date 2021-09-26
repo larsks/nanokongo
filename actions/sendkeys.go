@@ -5,6 +5,7 @@ package actions
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bendahl/uinput"
 	"github.com/rs/zerolog/log"
@@ -19,8 +20,9 @@ type (
 	}
 
 	KeySpec struct {
-		Keys []string
-		Mods []string
+		Keys  []string
+		Mods  []string
+		Delay int
 	}
 )
 
@@ -47,6 +49,9 @@ func (action SendKeysAction) Act(value, lastvalue int) error {
 			}
 
 			Kbd.KeyPress(key)
+			if keyspec.Delay > 0 {
+				time.Sleep(time.Duration(keyspec.Delay) * time.Millisecond)
+			}
 		}
 
 		for _, modname := range keyspec.Mods {
