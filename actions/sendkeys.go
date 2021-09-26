@@ -37,7 +37,9 @@ func (action SendKeysAction) Act(value, lastvalue int) error {
 				return fmt.Errorf("no such key: %s", modname)
 			}
 
-			Kbd.KeyDown(mod)
+			if err := Kbd.KeyDown(mod); err != nil {
+				return err
+			}
 		}
 
 		for _, keyname := range keyspec.Keys {
@@ -48,7 +50,9 @@ func (action SendKeysAction) Act(value, lastvalue int) error {
 				return fmt.Errorf("no such key: %s", keyname)
 			}
 
-			Kbd.KeyPress(key)
+			if err := Kbd.KeyPress(key); err != nil {
+				return err
+			}
 			if keyspec.Delay > 0 {
 				time.Sleep(time.Duration(keyspec.Delay) * time.Millisecond)
 			}
@@ -62,7 +66,9 @@ func (action SendKeysAction) Act(value, lastvalue int) error {
 				return fmt.Errorf("no such key: %s", modname)
 			}
 
-			Kbd.KeyUp(mod)
+			if err := Kbd.KeyUp(mod); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

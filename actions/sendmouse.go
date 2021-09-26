@@ -29,6 +29,7 @@ type (
 
 func (action SendMouseAction) Act(value, lastvalue int) error {
 	var dir int
+	var err error
 
 	log.Warn().Msgf("execute sendmouse action (%+v)", action.MouseSpec)
 	if value > lastvalue {
@@ -43,9 +44,12 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 		log.Debug().Int("x", x).Int("direction", dir).Msg("move x")
 
 		if dir < 0 {
-			Mouse.MoveLeft(int32(x))
+			err = Mouse.MoveLeft(int32(x))
 		} else {
-			Mouse.MoveRight(int32(x))
+			err = Mouse.MoveRight(int32(x))
+		}
+		if err != nil {
+			return err
 		}
 	}
 
@@ -55,9 +59,13 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 		log.Debug().Int("y", y).Int("direction", dir).Msg("move y")
 
 		if dir < 0 {
-			Mouse.MoveUp(int32(y))
+			err = Mouse.MoveUp(int32(y))
 		} else {
-			Mouse.MoveDown(int32(y))
+			err = Mouse.MoveDown(int32(y))
+		}
+
+		if err != nil {
+			return err
 		}
 	}
 
@@ -65,14 +73,18 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 		x := action.MouseSpec.WheelX
 
 		log.Debug().Int("x", x).Int("direction", dir).Msg("wheel x")
-		Mouse.Wheel(true, int32(dir*x))
+		if err = Mouse.Wheel(true, int32(dir*x)); err != nil {
+			return err
+		}
 	}
 
 	if action.MouseSpec.WheelY != 0 {
 		y := action.MouseSpec.WheelY
 
 		log.Debug().Int("y", y).Int("direction", dir).Msg("wheel y")
-		Mouse.Wheel(false, int32(dir*y))
+		if err = Mouse.Wheel(false, int32(dir*y)); err != nil {
+			return err
+		}
 	}
 
 	if action.MouseSpec.Press != "" {
@@ -82,11 +94,15 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 
 			switch button {
 			case "left":
-				Mouse.LeftPress()
+				err = Mouse.LeftPress()
 			case "right":
-				Mouse.RightPress()
+				err = Mouse.RightPress()
 			default:
 				panic(fmt.Errorf("unknown button: %s", button))
+			}
+
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -98,11 +114,15 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 
 			switch button {
 			case "left":
-				Mouse.LeftRelease()
+				err = Mouse.LeftRelease()
 			case "right":
-				Mouse.RightRelease()
+				err = Mouse.RightRelease()
 			default:
 				panic(fmt.Errorf("unknown button: %s", button))
+			}
+
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -114,11 +134,15 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 
 			switch button {
 			case "left":
-				Mouse.LeftClick()
+				err = Mouse.LeftClick()
 			case "right":
-				Mouse.RightClick()
+				err = Mouse.RightClick()
 			default:
 				panic(fmt.Errorf("unknown button: %s", button))
+			}
+
+			if err != nil {
+				return err
 			}
 		}
 	}

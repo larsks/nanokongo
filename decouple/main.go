@@ -70,6 +70,6 @@ func GetBool(name string, defval bool) (bool, bool) {
 	return ret, true
 }
 
-func Load(filenames ...string) {
-	godotenv.Load(filenames...)
+func Load(filenames ...string) error {
+	return godotenv.Load(filenames...)
 }

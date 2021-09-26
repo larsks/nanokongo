@@ -17,7 +17,7 @@ func must(err error) {
 }
 
 func main() {
-	decouple.Load()
+	err := decouple.Load()
 	decouple.SetPrefix("NANOKONGO_")
 
 	loglevel, _ := decouple.GetIntInRange("LOGLEVEL", 1, -1, 5)
@@ -25,6 +25,11 @@ func main() {
 	debug, _ := decouple.GetBool("DEBUG", false)
 
 	zerolog.SetGlobalLevel(zerolog.Level(loglevel))
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	if err != nil {
+		log.Debug().Err(err).Send()
+	}
 
 	defer func() {
 		// Set NANOKONGO_DEBUG=true if you want to see
@@ -35,8 +40,6 @@ func main() {
 			panic(err)
 		}
 	}()
-
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	cfg, err := ReadConfigFromFile(cfgfilename)
 	must(err)

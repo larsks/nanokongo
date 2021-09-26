@@ -8,6 +8,9 @@ GENERATED = $(EXENAME) \
 
 all: nanokongo
 
+test:
+	golangci-lint run
+
 nanokongo: $(SRCS)
 	go build
 
