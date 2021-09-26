@@ -126,10 +126,6 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 	return nil
 }
 
-func (action SendMouseAction) String() string {
-	return "sendKeys"
-}
-
 func NewSendMouseAction(args yaml.Node) (Action, error) {
 	action := SendMouseAction{}
 

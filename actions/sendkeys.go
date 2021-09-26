@@ -19,10 +19,6 @@ func (action SendKeysAction) Act(value, lastvalue int) error {
 	return nil
 }
 
-func (action SendKeysAction) String() string {
-	return "sendKeys"
-}
-
 func NewSendKeysAction(args yaml.Node) (Action, error) {
 	action := SendKeysAction{}
 

@@ -38,10 +38,6 @@ func (action CommandAction) Act(value, lastvalue int) error {
 	return nil
 }
 
-func (action CommandAction) String() string {
-	return "command"
-}
-
 func NewCommandAction(args yaml.Node) (Action, error) {
 	action := CommandAction{}
 
@@ -49,7 +45,7 @@ func NewCommandAction(args yaml.Node) (Action, error) {
 		return nil, err
 	}
 
-	log.Debug().Msgf("sendkeys config: %+v", action)
+	log.Debug().Msgf("command config: %+v", action)
 
 	return action, nil
 }
