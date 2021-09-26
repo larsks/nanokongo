@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/larsks/nanokongo/decouple"
+	"github.com/larsks/nanokongo/version"
 )
 
 func must(err error) {
@@ -30,6 +31,11 @@ func main() {
 	if err != nil {
 		log.Debug().Err(err).Send()
 	}
+
+	log.Info().
+		Str("version", version.BuildVersion).
+		Str("ref", version.BuildRef).
+		Str("date", version.BuildDate).Msgf("starting")
 
 	defer func() {
 		// Set NANOKONGO_DEBUG=true if you want to see
