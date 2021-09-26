@@ -10,7 +10,12 @@ var Kbd uinput.Keyboard
 
 type (
 	SendKeysAction struct {
-		KeySpecs []string
+		KeySpecs []KeySpec
+	}
+
+	KeySpec struct {
+		Keys []string
+		Mods []string
 	}
 )
 
