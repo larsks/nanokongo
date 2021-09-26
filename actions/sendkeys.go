@@ -1,5 +1,7 @@
 package actions
 
+//go:generate ./genkeycodes.sh
+
 import (
 	"github.com/bendahl/uinput"
 	"github.com/rs/zerolog/log"
