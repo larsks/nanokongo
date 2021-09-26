@@ -20,10 +20,11 @@ const (
 
 type (
 	Controller struct {
-		Config   *Config
+		config   *Config
 		Driver   *driver.Driver
 		Port     midi.In
-		Controls []Control
+		Channel  uint8
+		Controls map[uint8]*Control
 	}
 
 	ControlTypeEnum int
@@ -31,9 +32,16 @@ type (
 	Control struct {
 		Number    uint8
 		Type      ControlTypeEnum
+		LastValue uint8
+		Scale     *ScaleSpec
 		OnPress   []actions.Action
 		OnRelease []actions.Action
 		OnChange  []actions.Action
+	}
+
+	ScaleSpec struct {
+		MinOutput int
+		MaxOutput int
 	}
 )
 
@@ -54,7 +62,8 @@ func (t ControlTypeEnum) String() string {
 
 func NewController(cfg *Config) (*Controller, error) {
 	controller := Controller{
-		Config: cfg,
+		config:   cfg,
+		Controls: make(map[uint8]*Control),
 	}
 
 	drv, err := driver.New()
@@ -69,11 +78,34 @@ func NewController(cfg *Config) (*Controller, error) {
 	return &controller, nil
 }
 
-func NewControl(controlnumber uint8, controltype ControlTypeEnum) Control {
-	return Control{
+func NewControl(controlnumber uint8, controltype ControlTypeEnum, scalerange []int) *Control {
+	control := Control{
 		Number: controlnumber,
 		Type:   controltype,
 	}
+
+	if len(scalerange) == 2 {
+		control.Scale = &ScaleSpec{
+			MinOutput: scalerange[0],
+			MaxOutput: scalerange[1],
+		}
+	}
+
+	return &control
+}
+
+func (control *Control) ScaleValue(value uint8) int {
+	var newval int
+
+	if control.Scale == nil {
+		newval = int(value)
+	} else {
+		newval = int(
+			(float32(value)/float32(127))*
+				float32(control.Scale.MaxOutput-control.Scale.MinOutput)) + control.Scale.MinOutput
+	}
+
+	return newval
 }
 
 func ControlTypeFromName(t string) ControlTypeEnum {
@@ -117,13 +149,16 @@ func buildActionList(spec []map[string]yaml.Node) ([]actions.Action, error) {
 }
 
 func (controller *Controller) ProcessConfig() error {
-	for _, controlspec := range controller.Config.Controls {
+	controller.Channel = controller.config.Channel
+
+	for number, controlspec := range controller.config.Controls {
 		var err error
 
-		log.Debug().Msgf("found entry for control %d", controlspec.Control)
-		control := NewControl(controlspec.Control,
-			ControlTypeFromName(controlspec.Type))
-		controller.Controls = append(controller.Controls, control)
+		log.Debug().Msgf("found entry for control %d", number)
+		control := NewControl(number,
+			ControlTypeFromName(controlspec.Type),
+			controlspec.ScaleRange)
+		controller.Controls[number] = control
 		log.Debug().Msgf("control: %+v", control)
 
 		if control.Type == ControlTypeButton {
@@ -155,7 +190,7 @@ func (controller *Controller) Open() error {
 	var selected midi.In
 	for _, in := range ins {
 		log.Debug().Str("portname", in.String()).Msg("looking for device")
-		matched, err := filepath.Match(controller.Config.Device, in.String())
+		matched, err := filepath.Match(controller.config.Device, in.String())
 		if err != nil {
 			return err
 		}
@@ -196,19 +231,60 @@ func (controller *Controller) Listen() error {
 	return rd.ListenTo(controller.Port)
 }
 
-func (controller *Controller) HandleControlChange(pos *reader.Position, channel, control, value uint8) {
+func (controller *Controller) HandleControlChange(pos *reader.Position, channelNum, controlNum, value uint8) {
 	log := log.With().
-		Int("channel", int(channel)).
-		Int("control", int(control)).
+		Int("channel", int(channelNum)).
+		Int("control", int(controlNum)).
 		Int("value", int(value)).
 		Logger()
 
-	log.Debug().Msg("scanning config")
-
-	for _, c := range controller.Config.Controls {
-		log = log.With().Str("type", c.Type).Logger()
-		if c.Control == control {
-			log.Debug().Msg("found match")
-		}
+	if channelNum != controller.Channel {
+		log.Info().Msgf("not listening on channel")
+		return
 	}
+
+	control, exists := controller.Controls[controlNum]
+	if !exists {
+		log.Info().Msgf("no matching control configure")
+		return
+	}
+
+	log = log.With().Int("lastvalue", int(control.LastValue)).Logger()
+
+	switch control.Type {
+	case ControlTypeButton:
+		log.Debug().Msgf("handling button")
+		if value != 0 && value != 127 {
+			log.Warn().Msgf("value out of range")
+			return
+		}
+
+		if value == 0 && control.LastValue == 127 {
+			for _, action := range control.OnRelease {
+				action.Act(int(value))
+			}
+		} else if value == 1 && control.LastValue == 0 {
+			for _, action := range control.OnPress {
+				action.Act(int(value))
+			}
+		}
+
+		if value != control.LastValue {
+			for _, action := range control.OnChange {
+				action.Act(int(value))
+			}
+		}
+	case ControlTypeKnob:
+		svalue := control.ScaleValue(value)
+		log.Debug().Msgf("handling knob")
+		if value != control.LastValue {
+			for _, action := range control.OnChange {
+				action.Act(svalue)
+			}
+		}
+	default:
+		panic(fmt.Errorf("unknown control type: %d", control.Type))
+	}
+
+	control.LastValue = value
 }

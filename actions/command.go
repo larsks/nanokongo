@@ -11,8 +11,8 @@ type (
 	}
 )
 
-func (action CommandAction) Act() error {
-	log.Warn().Msgf("execute command action")
+func (action CommandAction) Act(value int) error {
+	log.Warn().Msgf("execute command action (%d)", value)
 	return nil
 }
 

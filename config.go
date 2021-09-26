@@ -12,11 +12,10 @@ type (
 	Config struct {
 		Device   string
 		Channel  uint8
-		Controls []ControlSpec
+		Controls map[uint8]ControlSpec
 	}
 
 	ControlSpec struct {
-		Control    uint8
 		Type       string
 		ScaleRange []int                  `yaml:"scaleRange,omitempty"`
 		OnRelease  []map[string]yaml.Node `yaml:"onRelease,omitempty"`

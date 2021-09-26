@@ -7,7 +7,7 @@ import (
 
 type (
 	Action interface {
-		Act() error
+		Act(int) error
 	}
 
 	ActionConstructor func(args yaml.Node) (Action, error)

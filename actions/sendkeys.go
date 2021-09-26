@@ -11,8 +11,8 @@ type (
 	}
 )
 
-func (action SendKeysAction) Act() error {
-	log.Warn().Msgf("execute sendkeys action")
+func (action SendKeysAction) Act(value int) error {
+	log.Warn().Msgf("execute sendkeys action (%d)", value)
 	return nil
 }
 
