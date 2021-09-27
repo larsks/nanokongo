@@ -7,8 +7,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/larsks/go-decouple"
 	"github.com/larsks/nanokongo/actions"
-	"github.com/larsks/nanokongo/decouple"
 	"github.com/larsks/nanokongo/version"
 )
 
