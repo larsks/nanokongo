@@ -12,11 +12,28 @@ import (
 var Mouse uinput.Mouse
 
 type (
+	// The sendMouse action lets you send mouse inputs in reaction to MIDI
+	// control change messages.
+	//
+	// Supported attributes are:
+	//
+	// - click: name of a button to click (one of "left", "right")
+	// - press: name of a button to press
+	// - release: name of a button to release
+	// - x: relative x movement
+	// - y: relative y movement
+	// - wheelx: relative horizontal wheel movement
+	// - wheely: relative vertical wheel movement
+	//
+	// Example config:
+	//
+	//	controls:
+	//	  58:
+	//	    type: button
+	//	    onRelease:
+	//	      - sendMouse:
+	//	          click: left
 	SendMouseAction struct {
-		MouseSpec MouseSpec
-	}
-
-	MouseSpec struct {
 		Click   string
 		Press   string
 		Release string
@@ -31,15 +48,15 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 	var dir int
 	var err error
 
-	log.Warn().Msgf("execute sendmouse action (%+v)", action.MouseSpec)
+	log.Warn().Msgf("execute sendmouse action (%+v)", action)
 	if value > lastvalue {
 		dir = 1
 	} else {
 		dir = -1
 	}
 
-	if action.MouseSpec.X != 0 {
-		x := action.MouseSpec.X
+	if action.X != 0 {
+		x := action.X
 
 		log.Debug().Int("x", x).Int("direction", dir).Msg("move x")
 
@@ -53,8 +70,8 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 		}
 	}
 
-	if action.MouseSpec.Y != 0 {
-		y := action.MouseSpec.Y
+	if action.Y != 0 {
+		y := action.Y
 
 		log.Debug().Int("y", y).Int("direction", dir).Msg("move y")
 
@@ -69,8 +86,8 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 		}
 	}
 
-	if action.MouseSpec.WheelX != 0 {
-		x := action.MouseSpec.WheelX
+	if action.WheelX != 0 {
+		x := action.WheelX
 
 		log.Debug().Int("x", x).Int("direction", dir).Msg("wheel x")
 		if err = Mouse.Wheel(true, int32(dir*x)); err != nil {
@@ -78,8 +95,8 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 		}
 	}
 
-	if action.MouseSpec.WheelY != 0 {
-		y := action.MouseSpec.WheelY
+	if action.WheelY != 0 {
+		y := action.WheelY
 
 		log.Debug().Int("y", y).Int("direction", dir).Msg("wheel y")
 		if err = Mouse.Wheel(false, int32(dir*y)); err != nil {
@@ -87,8 +104,8 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 		}
 	}
 
-	if action.MouseSpec.Press != "" {
-		buttons := strings.Split(action.MouseSpec.Press, "+")
+	if action.Press != "" {
+		buttons := strings.Split(action.Press, "+")
 		for _, button := range buttons {
 			log.Debug().Str("button", button).Msg("press")
 
@@ -107,8 +124,8 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 		}
 	}
 
-	if action.MouseSpec.Release != "" {
-		buttons := strings.Split(action.MouseSpec.Release, "+")
+	if action.Release != "" {
+		buttons := strings.Split(action.Release, "+")
 		for _, button := range buttons {
 			log.Debug().Str("button", button).Msg("release")
 
@@ -127,8 +144,8 @@ func (action SendMouseAction) Act(value, lastvalue int) error {
 		}
 	}
 
-	if action.MouseSpec.Click != "" {
-		buttons := strings.Split(action.MouseSpec.Click, "+")
+	if action.Click != "" {
+		buttons := strings.Split(action.Click, "+")
 		for _, button := range buttons {
 			log.Debug().Str("button", button).Msg("click")
 
@@ -159,7 +176,7 @@ func NewSendMouseAction(args yaml.Node) (Action, error) {
 		}
 	}
 
-	if err := args.Decode(&action.MouseSpec); err != nil {
+	if err := args.Decode(&action); err != nil {
 		return nil, err
 	}
 
