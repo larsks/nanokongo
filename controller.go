@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 	"gitlab.com/gomidi/midi"
@@ -197,38 +196,13 @@ func (controller *Controller) processConfig() error {
 }
 
 func (controller *Controller) Open() error {
-	ins, err := controller.Driver.Ins()
+	port, err := midi.OpenIn(controller.Driver, -1, controller.config.Device)
 	if err != nil {
 		return err
 	}
 
-	// Iterate over available MIDI inputs, looking for one that matches
-	// the glob pattern in the configuration file.
-	var selected midi.In
-	for _, in := range ins {
-		log.Debug().Str("portname", in.String()).Msg("looking for device")
-		matched, err := filepath.Match(controller.config.Device, in.String())
-		if err != nil {
-			return err
-		}
-
-		if matched {
-			selected = in
-			break
-		}
-	}
-
-	if selected == nil {
-		return fmt.Errorf("unable to find device")
-	}
-
-	log.Info().Str("portname", selected.String()).Msg("found device")
-
-	if err = selected.Open(); err != nil {
-		return err
-	}
-
-	controller.Port = selected
+	log.Info().Str("port", port.String()).Msgf("opened input device")
+	controller.Port = port
 
 	return nil
 
