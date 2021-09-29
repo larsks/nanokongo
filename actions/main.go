@@ -24,6 +24,7 @@ func RegisterActions() {
 	RegisterAction("sendKeys", NewSendKeysAction)
 	RegisterAction("command", NewCommandAction)
 	RegisterAction("sendMouse", NewSendMouseAction)
+	RegisterAction("sendMidi", NewSendMidiAction)
 }
 
 func LookupAction(want string) ActionConstructor {
