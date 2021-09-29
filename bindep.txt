@@ -1,0 +1,2 @@
+alsa-lib-devel [platform:rpm]
+libasound2-dev [platform:dpkg]

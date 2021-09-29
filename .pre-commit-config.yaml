@@ -1,5 +1,5 @@
 repos:
-  - repo: git://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.3.0
     hooks:
       - id: trailing-whitespace
@@ -19,10 +19,12 @@ repos:
         types: [file, yaml]
         entry: yamllint --strict
 
-  - repo: git://github.com/dnephin/pre-commit-golang
-    rev: f780b51bd3
+  - repo: https://github.com/larsks/pre-commit-golang
+    rev: 620cb19bed
     hooks:
       - id: go-fmt
+      - id: go-generate
+      - id: golangci-lint
       - id: go-mod-tidy
       - id: go-unit-tests
       - id: go-build

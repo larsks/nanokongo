@@ -21,15 +21,20 @@ jobs:
         with:
           go-version: '^1.16'
 
-      - name: Install pre-commit
+      - name: Install python requirements
         run: |
-          pip install pre-commit
+          pip install pre-commit bindep
 
       - name: Install golangci-lint
         run: |
           mkdir -p ~/.cache/bin
           curl -sfL -o golangci-lint.tar.gz https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-amd64.tar.gz
           tar -C ~/.cache/bin -xf golangci-lint.tar.gz --strip-components 1 --wildcards '*/golangci-lint'
+
+      - name: Install binary requirements
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install $(bindep -b)
 
       - name: Run linters
         run: |
