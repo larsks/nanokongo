@@ -1,21 +1,3 @@
-// The sendkeys action allows you to send keystrokes in resposne to
-// MIDI control change events.
-//
-// See https://github.com/bendahl/uinput/blob/master/keycodes.go for a
-// list of valid keycodes. Remove the "Key" part of the name, and
-// convert the rest to lower case, so "KeyA" -> "a", and
-// "KeyLeftshift" -> "leftshift".
-//
-// Example configuration:
-//
-//	controls:
-//	  41:
-//	    type: button
-//	    onRelease:
-//	      - sendKeys:
-//	          keys: [leftshift+o, o, d, d, b, i, t]
-//                delay: 100
-//
 package actions
 
 // Generate keycodes.go, which maps key names to keycodes.
@@ -34,6 +16,24 @@ import (
 var Kbd uinput.Keyboard
 
 type (
+	// The sendKeys action allows you to send keystrokes in response to
+	// MIDI control change events.
+	//
+	// See https://github.com/bendahl/uinput/blob/master/keycodes.go for a
+	// list of valid keycodes. Remove the "Key" part of the name, and
+	// convert the rest to lower case, so "KeyA" -> "a", and
+	// "KeyLeftshift" -> "leftshift".
+	//
+	// Example configuration:
+	//
+	//	controls:
+	//	  41:
+	//	    type: button
+	//	    onRelease:
+	//	      - sendKeys:
+	//	          keys: [leftshift+o, o, d, d, b, i, t]
+	//                delay: 100
+	//
 	SendKeysAction struct {
 		Keys  []string
 		Delay int

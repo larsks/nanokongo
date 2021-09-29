@@ -10,6 +10,21 @@ import (
 )
 
 type (
+	// The command action allows you to execute commands in response to
+	// MIDI events.
+	//
+	// A command is specified as a list of strings. Any occurrences of
+	// {value} will be replaced by the value of the MIDI control change
+	// message that triggered the event.
+	//
+	// Example configuration:
+	//
+	//	controls:
+	//	  0:
+	//	    type: knob
+	//	    scaleRange: [0, 100]
+	//	    onChange:
+	//	      - command: [amixer, set, Master, '{value}%']
 	CommandAction struct {
 		Args []string
 	}

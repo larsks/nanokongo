@@ -9,6 +9,21 @@ import (
 )
 
 type (
+	// The sendMidi actions lets you send MIDI control change messages in
+	// response to midi control change events.
+	//
+	// Example configuration:
+	//
+	//	controls:
+	//	  48:
+	//	    type: button
+	//	    onRelease:
+	//	      - sendMidi:
+	//	          device: nanoKONTROL2
+	//	          channel: 0
+	//	          messages:
+	//	          - control: 0x30
+	//	            value: 0x7f
 	SendMidiAction struct {
 		DeviceName    string    `yaml:"device"`
 		ChannelNumber uint8     `yaml:"channel"`
