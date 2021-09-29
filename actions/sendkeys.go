@@ -1,5 +1,24 @@
+// The sendkeys action allows you to send keystrokes in resposne to
+// MIDI control change events.
+//
+// See https://github.com/bendahl/uinput/blob/master/keycodes.go for a
+// list of valid keycodes. Remove the "Key" part of the name, and
+// convert the rest to lower case, so "KeyA" -> "a", and
+// "KeyLeftshift" -> "leftshift".
+//
+// Example configuration:
+//
+//	controls:
+//	  41:
+//	    type: button
+//	    onRelease:
+//	      - sendKeys:
+//	          keys: [leftshift+o, o, d, d, b, i, t]
+//                delay: 100
+//
 package actions
 
+// Generate keycodes.go, which maps key names to keycodes.
 //go:generate ./genkeycodes.sh
 
 import (
@@ -16,61 +35,49 @@ var Kbd uinput.Keyboard
 
 type (
 	SendKeysAction struct {
-		KeySpecs []KeySpec
-	}
-
-	KeySpec struct {
 		Keys  []string
-		Mods  []string
 		Delay int
 	}
 )
 
 func (action SendKeysAction) Act(value, lastvalue int) error {
-	for _, keyspec := range action.KeySpecs {
-		log.Warn().Msgf("execute sendkeys action (%+v)", keyspec)
-		for _, modname := range keyspec.Mods {
-			log.Debug().Msgf("keydown modifier %s", modname)
-			mod, exists := keycodes[strings.ToLower(modname)]
+	log.Warn().Msgf("execute sendkeys action (%+v)", action)
+	for _, keyspec := range action.Keys {
+		keys := strings.Split(keyspec, "+")
+
+		// Press keys
+		for i := range keys {
+			key := keys[i]
+			log.Debug().Msgf("keydown %s", key)
+			keycode, exists := keycodes[strings.ToLower(key)]
 			if !exists {
-				log.Warn().Msgf("no such key: %s", modname)
-				return fmt.Errorf("no such key: %s", modname)
+				return fmt.Errorf("no such key: %s", key)
 			}
 
-			if err := Kbd.KeyDown(mod); err != nil {
+			if err := Kbd.KeyDown(keycode); err != nil {
 				return err
 			}
 		}
 
-		for _, keyname := range keyspec.Keys {
-			log.Debug().Msgf("press key %s", keyname)
-			key, exists := keycodes[strings.ToLower(keyname)]
+		// Release keys
+		for i := range keys {
+			key := keys[len(keys)-1-i]
+			log.Debug().Msgf("keyup %s", key)
+			keycode, exists := keycodes[strings.ToLower(key)]
 			if !exists {
-				log.Warn().Msgf("no such key: %s", keyname)
-				return fmt.Errorf("no such key: %s", keyname)
+				return fmt.Errorf("no such key: %s", key)
 			}
 
-			if err := Kbd.KeyPress(key); err != nil {
+			if err := Kbd.KeyUp(keycode); err != nil {
 				return err
-			}
-			if keyspec.Delay > 0 {
-				time.Sleep(time.Duration(keyspec.Delay) * time.Millisecond)
 			}
 		}
 
-		for _, modname := range keyspec.Mods {
-			log.Debug().Msgf("keyup modifier %s", modname)
-			mod, exists := keycodes[strings.ToLower(modname)]
-			if !exists {
-				log.Warn().Msgf("no such key: %s", modname)
-				return fmt.Errorf("no such key: %s", modname)
-			}
-
-			if err := Kbd.KeyUp(mod); err != nil {
-				return err
-			}
+		if action.Delay > 0 {
+			time.Sleep(time.Duration(action.Delay) * time.Millisecond)
 		}
 	}
+
 	return nil
 }
 
@@ -83,7 +90,7 @@ func NewSendKeysAction(args yaml.Node) (Action, error) {
 		}
 	}
 
-	if err := args.Decode(&action.KeySpecs); err != nil {
+	if err := args.Decode(&action); err != nil {
 		return nil, err
 	}
 
