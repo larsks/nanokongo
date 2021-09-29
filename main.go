@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -18,16 +19,29 @@ func must(err error) {
 	}
 }
 
+func default_config_file() string {
+	path := "nanokongo.yml"
+
+	if val := os.Getenv("XDG_CONFIG_HOME"); val != "" {
+		path = filepath.Join(val, "nanokongo", "config.yml")
+	} else if val, err := os.UserHomeDir(); err == nil && val != "" {
+		path = filepath.Join(val, ".config", "nanokongo", "config.yml")
+	}
+
+	log.Debug().Str("path", path).Msgf("default config path")
+	return path
+}
+
 func main() {
 	err := decouple.Load()
 	decouple.SetPrefix("NANOKONGO_")
 
 	loglevel, _ := decouple.GetIntInRange("LOGLEVEL", 1, -1, 5)
-	cfgfilename, _ := decouple.GetString("CONFIG", "config.yml")
-	debug, _ := decouple.GetBool("DEBUG", false)
-
 	zerolog.SetGlobalLevel(zerolog.Level(loglevel))
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	cfgfilename, _ := decouple.GetString("CONFIG", default_config_file())
+	debug, _ := decouple.GetBool("DEBUG", false)
 
 	if err != nil {
 		log.Debug().Err(err).Send()
