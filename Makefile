@@ -1,11 +1,11 @@
 PKG = github.com/larsks/nanokongo
-EXENAME = nanokongo
+EXENAME=nanokongo-$(shell go env GOOS)-$(shell go env GOARCH)
 
 SRCS = $(wildcard *.go) \
        $(wildcard */*.go) \
        actions/keycodes.go
 
-GENERATED = $(EXENAME) \
+GENERATED = build/$(EXENAME) \
 	    actions/keycodes.go \
 	    actions/keycodes.go.txt
 
@@ -18,12 +18,12 @@ GOLDFLAGS = \
 	    -X '$(PKG)/version.BuildRef=$(COMMIT)' \
 	    -X '$(PKG)/version.BuildDate=$(DATE)'
 
-all: $(EXENAME)
+all: build/$(EXENAME)
 
 test:
 	golangci-lint run
 
-$(EXENAME): $(SRCS)
+build/$(EXENAME): $(SRCS)
 	go build -o $@ -ldflags "$(GOLDFLAGS)"
 
 actions/keycodes.go: actions/keycodes.go.txt
